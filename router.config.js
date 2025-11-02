@@ -1,4 +1,5 @@
 export default {
   
-  basename: "/meu-app-cadastro",
+  basePath: "/meu-app-cadastro",
+
 };
