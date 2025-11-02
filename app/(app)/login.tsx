@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
-import { isLoggedIn, login } from '../utils/auth';
+import { isLoggedIn, login } from '../../utils/auth';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function LoginScreen() {
       if (logado) router.replace('/clientes');
     };
     verificarLogin();
-  }, []);
+  }, [router]); // ✅ router incluído como dependência
 
   const handleLogin = async () => {
     if (username.trim() === '' || password.trim() === '') {
@@ -35,8 +35,19 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Sign In</Text>
-      <TextInput placeholder="Username" value={username} onChangeText={setUsername} style={styles.input} />
-      <TextInput placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
+      <TextInput
+        placeholder="Username"
+        value={username}
+        onChangeText={setUsername}
+        style={styles.input}
+      />
+      <TextInput
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        style={styles.input}
+      />
       {error !== '' && <Text style={styles.error}>{error}</Text>}
       <Button title="Sign In" onPress={handleLogin} />
     </View>
@@ -44,8 +55,28 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#e0e0e0' },
-  title: { fontSize: 24, marginBottom: 24, textAlign: 'center' },
-  input: { backgroundColor: '#fff', padding: 12, marginBottom: 12, borderRadius: 4, borderWidth: 1, borderColor: '#ccc' },
-  error: { color: 'red', marginBottom: 12, textAlign: 'center' },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: '#e0e0e0',
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  input: {
+    backgroundColor: '#fff',
+    padding: 12,
+    marginBottom: 12,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  error: {
+    color: 'red',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
 });

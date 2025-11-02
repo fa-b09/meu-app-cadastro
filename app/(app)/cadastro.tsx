@@ -2,15 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    Alert,
-    Button,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Button,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { ClienteData } from '../types/ClienteData';
+import { ClienteData } from '../../types/ClienteData';
 
 // @ts-ignore: Permite usar input HTML puro no React Native Web
 const InputDate = (props: any) => <input {...props} />;
