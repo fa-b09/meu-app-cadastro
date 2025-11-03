@@ -4,12 +4,15 @@ import { useEffect, useState } from 'react';
 import {
   Alert,
   Button,
+  KeyboardTypeOptions,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+
+
 import { ClienteData } from '../../types/ClienteData';
 
 // @ts-ignore: Permite usar input HTML puro no React Native Web
@@ -84,14 +87,41 @@ export default function CadastroScreen() {
       dataAlteracao: new Date().toISOString(),
     };
 
+    const isWeb = typeof window !== 'undefined';
+
     try {
-      const dados = await AsyncStorage.getItem('clientes');
-      const lista = dados ? JSON.parse(dados) : [];
+      const dados = isWeb
+        ? localStorage.getItem('clientes')
+        : await AsyncStorage.getItem('clientes');
+
+      let lista: ClienteData[] = [];
+
+      if (dados) {
+        try {
+          const parsed = JSON.parse(dados);
+          if (Array.isArray(parsed)) {
+            lista = parsed;
+          } else {
+            console.warn('Formato inválido de dados:', parsed);
+          }
+        } catch (jsonError) {
+          console.error('Erro ao interpretar JSON:', jsonError);
+        }
+      }
+
       lista.push(novoCliente);
-      await AsyncStorage.setItem('clientes', JSON.stringify(lista));
+      const atualizado = JSON.stringify(lista);
+
+      if (isWeb) {
+        localStorage.setItem('clientes', atualizado);
+      } else {
+        await AsyncStorage.setItem('clientes', atualizado);
+      }
+
       Alert.alert('Sucesso', 'Cliente cadastrado com sucesso!');
       router.push('/clientes');
     } catch (error) {
+      console.error('Erro ao salvar cliente:', error);
       Alert.alert('Erro', 'Não foi possível salvar os dados.');
     }
   };
@@ -114,44 +144,43 @@ export default function CadastroScreen() {
     setTotal('');
   };
 
+  const campos: {
+  label: string;
+  value: string;
+  setter: (text: string) => void;
+  keyboardType?: KeyboardTypeOptions;
+  editable?: boolean;
+}[] = [
+  { label: 'Nome*', value: nome, setter: setNome },
+  { label: 'Endereço*', value: endereco, setter: setEndereco },
+  { label: 'Bairro*', value: bairro, setter: setBairro },
+  { label: 'Cidade*', value: cidade, setter: setCidade },
+  { label: 'CEP*', value: cep, setter: setCep, keyboardType: 'numeric' },
+  { label: 'Telefone*', value: telefone, setter: setTelefone, keyboardType: 'phone-pad' },
+  { label: 'Qtde Peças*', value: qtde, setter: setQtde, keyboardType: 'numeric' },
+  { label: 'Valor Unitário*', value: unitario, setter: setUnitario, keyboardType: 'numeric' },
+  { label: 'Total de Dias', value: dias, setter: () => {}, editable: false },
+  { label: 'Peças por Dia', value: porDia, setter: () => {}, editable: false },
+  { label: 'Valor Total', value: total, setter: () => {}, editable: false },
+];
+
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Cadastro de Clientes</Text>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>Nome*</Text>
-        <TextInput style={styles.input} value={nome} onChangeText={setNome} />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Endereço*</Text>
-        <TextInput style={styles.input} value={endereco} onChangeText={setEndereco} />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Bairro*</Text>
-        <TextInput style={styles.input} value={bairro} onChangeText={setBairro} />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Cidade*</Text>
-        <TextInput style={styles.input} value={cidade} onChangeText={setCidade} />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>CEP*</Text>
-        <TextInput style={styles.input} value={cep} onChangeText={setCep} keyboardType="numeric" />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Telefone*</Text>
-        <TextInput
-          style={styles.input}
-          value={telefone}
-          onChangeText={setTelefone}
-          keyboardType="phone-pad"
-        />
-      </View>
+      {campos.map((field, index) => (
+        <View key={index} style={styles.field}>
+          <Text style={styles.label}>{field.label}</Text>
+          <TextInput
+            style={styles.input}
+            value={field.value}
+            onChangeText={field.setter}
+            editable={field.editable !== false}
+            keyboardType={field.keyboardType ?? 'default'}
+          />
+        </View>
+      ))}
 
       <View style={styles.field}>
         <Text style={styles.label}>Data Entrada*</Text>
@@ -179,41 +208,6 @@ export default function CadastroScreen() {
         />
       </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>Qtde Peças*</Text>
-        <TextInput
-          style={styles.input}
-          value={qtde}
-          onChangeText={setQtde}
-          keyboardType="numeric"
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Valor Unitário*</Text>
-        <TextInput
-          style={styles.input}
-          value={unitario}
-          onChangeText={setUnitario}
-          keyboardType="numeric"
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Total de Dias</Text>
-        <TextInput style={styles.input} value={dias} editable={false} />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Peças por Dia</Text>
-        <TextInput style={styles.input} value={porDia} editable={false} />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Valor Total</Text>
-        <TextInput style={styles.input} value={total} editable={false} />
-      </View>
-
       <View style={styles.buttonRow}>
         <Button title="Salvar" onPress={handleSalvar} />
         <Button title="Limpar" onPress={handleClear} color="#888" />
@@ -224,8 +218,11 @@ export default function CadastroScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
     backgroundColor: '#6a4c93',
+    flex: 1,
+  },
+  content: {
+    padding: 24,
     flexGrow: 1,
   },
   title: {

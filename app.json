@@ -40,9 +40,10 @@
         }
       ]
     ],
-    "experiments": {
+   "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": true,
+      "baseUrl": "/meu-app-de-cadastro"  
     },
     "extra": {
       "router": {},

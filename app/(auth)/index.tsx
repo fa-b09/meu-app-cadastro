@@ -1,36 +1,89 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Redirect, Stack } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
+import { isLoggedIn, login } from '../../utils/auth';
 
-export default function RootLayout() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+export default function LoginScreen() {
+  const router = useRouter();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const verificarLogin = async () => {
-      const user = await AsyncStorage.getItem('usuarioLogado');
-      setIsLoggedIn(!!user);
+      const logado = await isLoggedIn();
+      console.log('Verificando login automático:', logado);
+      if (logado) {
+        console.log('Usuário já logado, redirecionando...');
+        router.replace('/clientes');
+      }
     };
     verificarLogin();
-  }, []);
+  }, [router]);
 
-  if (isLoggedIn === null) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#673AB7" />
-        <Text>Verificando autenticação...</Text>
-      </View>
-    );
-  }
+  const handleLogin = async () => {
+    console.log('Login iniciado com:', username, password);
 
-  if (!isLoggedIn) {
-    return <Redirect href="/" />;
-  }
+    if (username.trim() === '' || password.trim() === '') {
+      setError('Preencha todos os campos.');
+      return;
+    }
+
+    if (username !== 'admin' || password !== '1234') {
+      setError('Usuário ou senha inválidos.');
+      return;
+    }
+
+    await login(username);
+    console.log('Login salvo, redirecionando...');
+    router.replace('/clientes');
+  };
 
   return (
-    <Stack>
-      <Stack.Screen name="(app)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-    </Stack>
+    <View style={styles.container}>
+      <Text style={styles.title}>Sign In</Text>
+      <TextInput
+        placeholder="Username"
+        value={username}
+        onChangeText={setUsername}
+        style={styles.input}
+      />
+      <TextInput
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        style={styles.input}
+      />
+      {error !== '' && <Text style={styles.error}>{error}</Text>}
+      <Button title="Sign In" onPress={handleLogin} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: '#e0e0e0',
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  input: {
+    backgroundColor: '#fff',
+    padding: 12,
+    marginBottom: 12,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  error: {
+    color: 'red',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+});

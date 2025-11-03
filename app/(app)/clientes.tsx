@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { ClienteData } from '../../types/ClienteData';
+import { logout } from '../../utils/auth';
 
 export default function ClientesScreen() {
   const [clientes, setClientes] = useState<ClienteData[]>([]);
@@ -20,25 +21,33 @@ export default function ClientesScreen() {
   useEffect(() => {
     const carregarClientes = async () => {
       try {
-        const dados = await AsyncStorage.getItem('clientes');
+        const isWeb = typeof window !== 'undefined';
+        const dados = isWeb
+          ? localStorage.getItem('clientes')
+          : await AsyncStorage.getItem('clientes');
+
+        console.log('Dados brutos de clientes:', dados);
+
         let lista: ClienteData[] = [];
 
         if (dados) {
           try {
-            lista = JSON.parse(dados);
-            console.log('Clientes carregados:', lista);
+            const parsed = JSON.parse(dados);
+            if (Array.isArray(parsed)) {
+              lista = parsed;
+            } else {
+              console.warn('Formato inválido de dados:', parsed);
+            }
           } catch (jsonError) {
             console.error('Erro ao interpretar JSON:', jsonError);
-            lista = [];
           }
         }
 
         setClientes(lista);
       } catch (error) {
         console.error('Erro ao carregar clientes:', error);
-        setClientes([]);
       } finally {
-        setLoading(false);
+        setTimeout(() => setLoading(false), 300); // suaviza transição
       }
     };
 
@@ -53,7 +62,8 @@ export default function ClientesScreen() {
     router.push('/menu');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logout();
     router.replace('/');
   };
 
@@ -66,8 +76,8 @@ export default function ClientesScreen() {
 Cliente: ${cliente.nome}
 Telefone: ${cliente.telefone}
 Endereço: ${cliente.endereco}, ${cliente.bairro}, ${cliente.cidade} - ${cliente.cep}
-Entrada: ${new Date(cliente.entrada).toLocaleDateString()}
-Saída: ${new Date(cliente.saida).toLocaleDateString()}
+Entrada: ${cliente.entrada ? new Date(cliente.entrada).toLocaleDateString() : '—'}
+Saída: ${cliente.saida ? new Date(cliente.saida).toLocaleDateString() : '—'}
 Total: R$ ${cliente.total}
     `;
     console.log('Compartilhar:', texto);
@@ -83,7 +93,7 @@ Total: R$ ${cliente.total}
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <Text style={styles.title}>Clientes Cadastrados</Text>
 
       <View style={styles.buttonRow}>
@@ -101,23 +111,23 @@ Total: R$ ${cliente.total}
       {clientes.length === 0 ? (
         <Text style={styles.empty}>Nenhum cliente cadastrado ainda.</Text>
       ) : (
-        clientes.map((cliente) => (
-          <View key={cliente.id} style={styles.card}>
-            <Text style={styles.nome}>{cliente.nome}</Text>
-            <Text>Telefone: {cliente.telefone}</Text>
-            <Text>Endereço: {cliente.endereco}</Text>
-            <Text>Bairro: {cliente.bairro}</Text>
-            <Text>Cidade: {cliente.cidade}</Text>
-            <Text>CEP: {cliente.cep}</Text>
-            <Text>Entrada: {new Date(cliente.entrada).toLocaleDateString()}</Text>
-            <Text>Saída: {new Date(cliente.saida).toLocaleDateString()}</Text>
-            <Text>Total de Dias: {cliente.dias}</Text>
-            <Text>Qtde Peças: {cliente.qtde}</Text>
-            <Text>Peças por Dia: {cliente.porDia}</Text>
-            <Text>Valor Unitário: R$ {cliente.unitario}</Text>
-            <Text>Valor Total: R$ {cliente.total}</Text>
+        clientes.map((cliente, index) => (
+          <View key={cliente.id ?? index.toString()} style={styles.card}>
+            <Text style={styles.nome}>{cliente.nome ?? '—'}</Text>
+            <Text>Telefone: {cliente.telefone ?? '—'}</Text>
+            <Text>Endereço: {cliente.endereco ?? '—'}</Text>
+            <Text>Bairro: {cliente.bairro ?? '—'}</Text>
+            <Text>Cidade: {cliente.cidade ?? '—'}</Text>
+            <Text>CEP: {cliente.cep ?? '—'}</Text>
+            <Text>Entrada: {cliente.entrada ? new Date(cliente.entrada).toLocaleDateString() : '—'}</Text>
+            <Text>Saída: {cliente.saida ? new Date(cliente.saida).toLocaleDateString() : '—'}</Text>
+            <Text>Total de Dias: {cliente.dias ?? '—'}</Text>
+            <Text>Qtde Peças: {cliente.qtde ?? '—'}</Text>
+            <Text>Peças por Dia: {cliente.porDia ?? '—'}</Text>
+            <Text>Valor Unitário: R$ {cliente.unitario ?? '—'}</Text>
+            <Text>Valor Total: R$ {cliente.total ?? '—'}</Text>
             <Text style={styles.dataCadastro}>
-              Cadastrado em: {new Date(cliente.dataCadastro).toLocaleString()}
+              Cadastrado em: {cliente.dataCadastro ? new Date(cliente.dataCadastro).toLocaleString() : '—'}
             </Text>
 
             <View style={styles.actions}>
@@ -136,10 +146,12 @@ Total: R$ ${cliente.total}
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    backgroundColor: '#6a4c93',
+  },
   container: {
     padding: 24,
-    backgroundColor: '#6a4c93',
-    flexGrow: 1,
   },
   title: {
     fontSize: 22,
