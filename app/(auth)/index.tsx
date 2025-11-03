@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
-import { isLoggedIn, login } from '../../utils/auth';
+import { login } from '../../utils/auth';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -9,18 +9,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const verificarLogin = async () => {
-      const logado = await isLoggedIn();
-      console.log('Verificando login automático:', logado);
-      if (logado) {
-        console.log('Usuário já logado, redirecionando...');
-        router.replace('/clientes');
-      }
-    };
-    verificarLogin();
-  }, [router]);
-
+ 
   const handleLogin = async () => {
     console.log('Login iniciado com:', username, password);
 
