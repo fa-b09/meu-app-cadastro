@@ -1,51 +1,96 @@
-import { Redirect, Stack } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
-// IMPORTANTE: Ajuste este caminho se o seu arquivo 'auth.ts' estiver em outro lugar
-import { isLoggedIn } from '../utils/auth';
-
-export default function RootLayout() {
-  const [isLogged, setIsLogged] = useState<boolean | null>(null);
-
-  // 1. EFEITO QUE VERIFICA O LOGIN APENAS UMA VEZ
-  useEffect(() => {
-    const verificarLogin = async () => {
-      // Chama a função de autenticação do seu arquivo utils/auth.ts
-      const logado = await isLoggedIn(); 
-      console.log('Verificação de login concluída:', logado);
-      setIsLogged(logado); // Atualiza o estado
-    };
-    verificarLogin();
-  }, []); // Array de dependências vazio garante que rode apenas na montagem
-
-  // 2. ESTADO DE CARREGAMENTO (Tela de "Verificando Autenticação...")
-  if (isLogged === null) {
-    console.log('Estado: Carregando...');
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-        <ActivityIndicator size="large" color="#673AB7" />
-        <Text>Verificando autenticação...</Text>
-      </View>
-    );
-  }
-
-  // 3. REDIRECIONAMENTO PARA LOGIN (Área Deslogada)
-  if (!isLogged) {
-    console.log('Estado: Deslogado. Redirecionando...');
-    // O Redirect para "/" fará com que o Router procure a rota mais próxima,
-    // que geralmente é a que está no seu grupo (auth).
-    return <Redirect href="/(auth)" />; 
-  }
-
-  // 4. NAVEGAÇÃO PRINCIPAL (Área Logada)
-  console.log('Estado: Logado. Renderizando Stack...');
-  return (
-    <Stack>
-      {/* O nome '(app)' aponta para a pasta app/(app)/_layout.tsx */}
-      <Stack.Screen name="(app)" options={{ headerShown: false }} />
-      {/* O nome '(auth)' aponta para a pasta app/(auth)/_layout.tsx */}
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-    </Stack>
-  );
+// 1. Define o tipo para o contexto de autenticação
+interface AuthContextType {
+  isLoggedIn: boolean;
+  isLoading: boolean;
+  logIn: () => Promise<void>;
+  logOut: () => Promise<void>;
 }
+
+// Chave para armazenar o token de autenticação no AsyncStorage
+const AUTH_TOKEN_KEY = 'user_auth_token';
+
+// 2. Cria o Contexto
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// 3. Cria o Provedor de Autenticação (AuthProvider)
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Começa como true para verificar o AsyncStorage
+
+  // Efeito para carregar o estado de login do AsyncStorage
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+        if (token) {
+          // Se houver um token, o usuário está logado
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        console.error("Erro ao ler AsyncStorage:", error);
+        setIsLoggedIn(false); // Assume não logado em caso de erro
+      } finally {
+        setIsLoading(false); // O carregamento inicial terminou, mesmo que tenha falhado
+      }
+    };
+    checkLoginStatus();
+  }, []);
+
+  // Função para simular o login (salva um token fictício)
+  const logIn = async () => {
+    setIsLoading(true);
+    // Simulação de autenticação bem-sucedida
+    try {
+      await AsyncStorage.setItem(AUTH_TOKEN_KEY, 'simulated_jwt_token_123');
+      setIsLoggedIn(true);
+      // CORREÇÃO: Adicionamos '/index' para navegar para o arquivo dentro do grupo (app)
+      router.replace('/(app)/clientes'); 
+    } catch (error) {
+      console.error("Erro ao salvar token:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Função para simular o logout (remove o token)
+  const logOut = async () => {
+    setIsLoading(true);
+    try {
+      await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
+      setIsLoggedIn(false);
+      // CORREÇÃO: Adicionamos '/index' para navegar para o arquivo dentro do grupo (auth)
+      router.replace('/(auth)'); 
+    } catch (error) {
+      console.error("Erro ao remover token:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const value = {
+    isLoggedIn,
+    isLoading,
+    logIn,
+    logOut,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+// 4. Hook customizado para usar o contexto
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  }
+  return context;
+};
+
+// Lembre-se de instalar a biblioteca se ainda não o fez:
+// npx expo install @react-native-async-storage/async-storage
