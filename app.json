@@ -43,7 +43,7 @@
    "experiments": {
       "typedRoutes": true,
       "reactCompiler": true,
-      "baseUrl": "/meu-app-de-cadastro"  
+      "baseUrl": "/meu-app-cadastro"  
     },
     "extra": {
       "router": {},
