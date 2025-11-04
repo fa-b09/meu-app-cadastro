@@ -1,59 +1,51 @@
+// EM utils/auth.ts
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// IMPORTANTE: Use 'Platform' do React Native para verificar o ambiente
+import { Platform } from 'react-native';
 
-const isWeb = typeof window !== 'undefined';
-const STORAGE_KEY = 'usuarioLogado';
+const STORAGE_KEY = 'usuarioLogado'; // Garanta que esta chave está correta
 
-// Funções auxiliares
-const setItem = async (key: string, value: string) => {
-  if (isWeb) {
-    localStorage.setItem(key, value);
-  } else {
-    await AsyncStorage.setItem(key, value);
-  }
-};
-
+// Função para buscar o valor do armazenamento
 const getItem = async (key: string): Promise<string | null> => {
-  if (isWeb) {
-    return localStorage.getItem(key);
-  } else {
-    return await AsyncStorage.getItem(key);
+  // Se for o ambiente WEB (navegador):
+  if (Platform.OS === 'web') {
+    // Certifique-se de que o localStorage existe antes de usar
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem(key);
+    }
+    return null; 
   }
-};
-
-const removeItem = async (key: string) => {
-  if (isWeb) {
-    localStorage.removeItem(key);
-  } else {
-    await AsyncStorage.removeItem(key);
-  }
-};
-
-// Funções principais
-export const login = async (username: string): Promise<void> => {
-  try {
-    await setItem(STORAGE_KEY, username);
-    console.log('Login salvo com sucesso');
-  } catch (error) {
-    console.error('Erro ao salvar login:', error);
-  }
-};
-
-export const logout = async (): Promise<void> => {
-  try {
-    await removeItem(STORAGE_KEY);
-    console.log('Logout realizado com sucesso');
-  } catch (error) {
-    console.error('Erro ao remover login:', error);
-  }
+  // Para iOS e Android (Ambiente Native):
+  return await AsyncStorage.getItem(key);
 };
 
 export const isLoggedIn = async (): Promise<boolean> => {
   try {
     const user = await getItem(STORAGE_KEY);
-    console.log('Verificação de login:', user);
-    return Boolean(user);
+    // Se o valor for uma string não vazia, significa que está logado
+    return Boolean(user); 
   } catch (error) {
-    console.error('Erro ao verificar login:', error);
-    return false;
+    console.error('Falha ao verificar o login na web:', error);
+    // Em caso de falha de leitura (evita loop):
+    return false; 
   }
+};
+
+// ... Sua função 'login' deve usar o 'setItem' da mesma forma ...
+export const login = async (username: string) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.localStorage.setItem(STORAGE_KEY, username);
+    } else {
+        await AsyncStorage.setItem(STORAGE_KEY, username);
+    }
+};
+
+// ... E sua função 'logout' deve usar o 'removeItem' ...
+export const logout = async () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.localStorage.removeItem(STORAGE_KEY);
+    } else {
+        await AsyncStorage.removeItem(STORAGE_KEY);
+    }
 };
