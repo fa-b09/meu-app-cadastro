@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
       setIsLoggedIn(false);
       // Leva para a tela de Login (dentro de /app/(auth)/)
-      router.replace('./(auth)/index'); 
+      router.replace('/(auth)'); 
     } catch (error) {
       console.error("Erro ao remover token:", error);
     } finally {

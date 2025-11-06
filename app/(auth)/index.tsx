@@ -25,7 +25,7 @@ export default function LoginScreen() {
 
     await login(username);
     console.log('Login salvo, redirecionando...');
-    router.replace('/clientes');
+    //router.replace('/clientes');
   };
 
   return (
