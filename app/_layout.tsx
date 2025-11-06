@@ -39,18 +39,18 @@ const LayoutContent = () => {
   // Se o carregamento terminou (isLoading=false) E o usuário não está logado
   if (!isLoggedIn) {
     // Redireciona para a tela de Login (index.tsx dentro do grupo (auth))
-    return <Redirect href="./(auth)/index" />; 
+    return <Redirect href="/(auth)" />; 
   }
 
   // ESTADO LOGADO
   // Se o carregamento terminou (isLoading=false) E o usuário está logado
   if (isLoggedIn) {
      // Redireciona para a tela de Clientes (clientes.tsx dentro do grupo (app))
-    return <Redirect href="./(app)/clientes" />;
+    return <Redirect href="/(app)/clientes" />;
   }
 
   // (Fallback, caso algo dê errado, embora não deva chegar aqui)
-  return <Redirect href="./(auth)/index" />;
+  return <Redirect href="/(auth)" />;
 };
 
 // Exporta o RootLayout como padrão para este arquivo de rota
